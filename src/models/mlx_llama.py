@@ -46,8 +46,9 @@ class MLXLlamaModel(HuggingFaceModel):
                  speed: ModelPerformance, 
                  use_quantized: bool = False):
         try:
-            import mlx_lm
-            self.mlx_lm = mlx_lm
+            import mlx_llama
+            self.mlx_llama = mlx_llama
+
         except ImportError:
             raise ImportError("Please install mlx-llama: pip install mlx-lm")
             
@@ -66,7 +67,7 @@ class MLXLlamaModel(HuggingFaceModel):
             )
             
             # Load model and tokenizer
-            self.model, self.tokenizer = self.mlx_lm.load(
+            self.model, self.tokenizer = self.mlx_llama.load(
                 path_or_hf_repo=model_path,
                 **self.config.get_inference_params(self.performance)
             )
