@@ -1,0 +1,2 @@
+ - Add GUI
+ - Revamp RealTimeTranscription to use server client structe (FastAPI)
