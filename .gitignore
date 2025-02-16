@@ -1,3 +1,5 @@
 asr-venv
 *DS_Store
 *.swp
+*.pyc
+src/models/cache

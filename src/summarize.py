@@ -1,5 +1,5 @@
 import ollama
-from pydantic import BaseModel
+from pydantic import BaseModel as pydantic_BaseModel
 
 # FIXME: use mlx from hugginface instead of ollama
 
@@ -10,7 +10,7 @@ MODELS = {
 }
 
 
-class ConversationSummary(BaseModel):
+class ConversationSummary(pydantic_BaseModel):
     topics: list[str]
     decisions: list[str]
     action_items: list[str]
