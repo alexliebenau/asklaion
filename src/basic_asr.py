@@ -9,6 +9,7 @@ if __name__ == "__main__":
     print('Setting up audio input')
     input_audio_config = AudioConfig()
     audio_recorder = AudioInputRecorder(input_audio_config)
+    audio_recorder.set_silence_threshold() # move to init?
 
     print('Setting up model audio input')
     model_input_config = AudioConfig()

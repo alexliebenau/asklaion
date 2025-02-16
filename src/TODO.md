@@ -1,2 +1,9 @@
  - Add GUI
  - Revamp RealTimeTranscription to use server client structe (FastAPI)
+ - ModelPerformance enum is crap, get better idea
+ - implement faster-whisper and non-mlx Llama3 and whatever other models might seem interesting
+ - Move silence threshold and that stuff away from audioconfig
+ - Prompts einbinden
+ - bisherige audio chunks in den kontext des Modells mitnehmen
+ - JSON encoding auf Zertifikate umstellen statt base64
+ - fix string flush (remaining ")" sometimes)

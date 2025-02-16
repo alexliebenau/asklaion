@@ -132,18 +132,6 @@ class HuggingFaceModel(BaseModel):
                 resume_download=True
             )
 
-        # # Check for tokenizer in multiple locations
-        # tokenizer_paths = [
-        #     model_dir / "tokenizer.json",
-        #     model_dir / "tokenizers/tokenizer.json",
-        #     model_dir / "tokenizer/tokenizer.json"
-        # ]
-        
-        # if not any(p.exists() for p in tokenizer_paths):
-        #     raise FileNotFoundError(
-        #         f"Tokenizer missing in {model_dir}. Valid paths tried: {tokenizer_paths}"
-        #     )
-
         required_files = {"config.json", "weights.npz"}
         missing = required_files - set(os.listdir(model_dir))
         if missing:

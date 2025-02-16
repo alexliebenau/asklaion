@@ -1,5 +1,6 @@
-import json 
+import math 
 import pyaudio
+import logging
 import numpy as np
 from scipy import signal
 from dataclasses import dataclass
@@ -13,24 +14,55 @@ You may change it to match your current audio setup, however that might
 have an impact on transcribtion performance.
 '''
 
+def map_sample_size(bits: int) -> int:
+    format_map = {
+            16: pyaudio.paInt16,
+            24: pyaudio.paInt24,
+            32: pyaudio.paFloat32
+        }
+    if bits not in format_map:
+        raise ValueError(f'Invalid sample_size: {bits}. Choose 16, 24, or 32 bits')
+    return format_map[bits]
+
+def map_to_numpy(sample_size: int):
+    return {
+            pyaudio.paInt16: np.int16,
+            pyaudio.paInt24: np.int32,  # 24-bit not native in numpy
+            pyaudio.paFloat32: np.float32
+        }[map_sample_size(sample_size)]
+
+
 @dataclass
 class AudioConfig:
-    sample_size: int = 16 # or 24 or 32 [bit]
+    sample_size: int = 16  # bits (16, 24, or 32)
     channels: int = 1
-    rate: int = 16000
-    chunk: int = 2048
-    silence_threshold: int = 400
-    silence_consecutive: int = 5
+    rate: int = 16000       # Hz
+    chunk: int = 2048       # bytes per chunk
+    silence_threshold: int = 80000
+    silence_duration: int = 1  # seconds
     input_device: int = None
 
     @property
     def format(self) -> int:
-        if self.sample_size == 16: return pyaudio.paInt16
-        elif self.sample_size == 24: return pyaudio.paInt24
-        elif self.sample_size == 32: return pyaudio.paFloat32
-        else:
-            raise ValueError(f'Invalid config for sample_size: {self.sample_size}. Choose 16, 24 or 32 [bit]')
-
+        return map_sample_size(self.sample_size)
+        
+    @property
+    def numpy_format(self):
+        return map_to_numpy(self.sample_size)
+    
+    @property
+    def samples_per_chunk(self) -> int:
+        bytes_per_sample = (self.sample_size // 8) * self.channels
+        return self.chunk // bytes_per_sample
+    
+    @property
+    def chunk_duration(self) -> float:
+        return self.samples_per_chunk / self.rate
+    
+    @property
+    def silence_consecutive(self) -> int:
+        return math.ceil(self.silence_duration / self.chunk_duration)
+    
 
 class AudioConverter:
     """Converts audio chunks between different audio configurations"""
@@ -157,7 +189,7 @@ class AudioInputRecorder:
         self.config = config or AudioConfig()
         self.raw = raw
         
-    def read_chunk(self, raw: bool = False) -> dict[str, Any] | bytes:
+    def read_chunk(self) -> dict[str, Any] | bytes:
         """
         Read and convert audio chunk
         
@@ -177,8 +209,41 @@ class AudioInputRecorder:
             try:
                 yield self.read_chunk(self.raw)
             except Exception as e:
-                print(f"Error reading audio stream: {e}")
+                logging.error(f"Error reading audio stream: {e}")
                 break
+
+    def set_silence_threshold(self):
+        """Calibrate silence threshold using peak amplitude detection"""
+        logging.warning(f'Setting mic threshold. Please stay silent for {self.config.silence_duration}s')
+        max_amplitude = 0
+        chunks_needed = math.ceil(self.config.rate / self.config.chunk * self.config.silence_duration)
+        dtype = self.config.numpy_format
+        
+        for _ in range(chunks_needed):
+            audio_frame = self.stream.read(self.config.chunk, exception_on_overflow=False)
+            audio_array = np.frombuffer(audio_frame, dtype=dtype)
+            
+            # Track maximum amplitude with 50% safety margin
+            current_max = np.max(np.abs(audio_array)) * 2
+            if current_max > max_amplitude:
+                max_amplitude = current_max
+                
+        self.config.silence_threshold = int(max_amplitude)
+        logging.info(f'Silence threshold set to: {self.config.silence_threshold} ({self.mic_level(self.config.silence_threshold):.2f}%, Range: 0-{self._max_possible_amplitude})')
+
+    @property
+    def _max_possible_amplitude(self):
+        """Get maximum possible value for current format"""
+        if self.config.numpy_format == np.int16:
+            return 32767
+        elif self.config.numpy_format == np.int32:  # For 24-bit packed in 32-bit
+            return 8388607
+        elif self.config.numpy_format == np.float32:
+            return 1.0
+        return 0
+    
+    def mic_level(self, level: int) -> float:
+        return 100 / self._max_possible_amplitude * level
     
     def close(self):
         """Clean up audio resources"""
