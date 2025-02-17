@@ -224,7 +224,7 @@ class AudioInputRecorder:
                 max_amplitude = current_max
                 
         self.config.silence_threshold = int(max_amplitude)
-        logging.info(f'Silence threshold set to: {self.config.silence_threshold} ({self.mic_level(self.config.silence_threshold):.2f}%, Range: 0-{self._max_possible_amplitude})')
+        logging.info(f'Silence threshold set to: {self.config.silence_threshold} ({self.input_level(self.config.silence_threshold):.2f}%, Range: 0-{self._max_possible_amplitude})')
 
     @property
     def _max_possible_amplitude(self):
@@ -237,7 +237,7 @@ class AudioInputRecorder:
             return 1.0
         return 0
     
-    def mic_level(self, level: int) -> float:
+    def input_level(self, level: int) -> float:
         return 100 / self._max_possible_amplitude * level
     
     def close(self):

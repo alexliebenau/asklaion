@@ -128,7 +128,7 @@ class RealTimeTranscriber:
                 
                 # Calculate current audio level metrics
                 current_level = np.mean(np.abs(audio_array))
-                format_level = lambda level: f'{level:.2f} / {self.audio_setup.mic_level(current_level):.2f}%'
+                format_level = lambda level: f'{level:.2f} / {self.audio_setup.input_level(level):.2f}%'
                 
                 # Print status with flushing and carriage return
                 print(
