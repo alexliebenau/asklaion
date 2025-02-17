@@ -44,7 +44,8 @@ def get_audio_frame(packet: dict[str, Any],
     audio: dict[str, Any] = data.get('audio')
     if not audio:
         raise RuntimeError(f'No audio in package!')
-    
+
+    # FIXME: Decoding bug?? 
     audio_bytes = base64.b64decode(audio.pop('bytes'))
     audio_array = np.fromstring(audio_bytes, dtype=map_to_numpy(audio['sample_size']))
     source_config = AudioConfig(**audio)
