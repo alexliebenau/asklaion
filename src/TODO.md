@@ -7,4 +7,4 @@
  - Prompts einbinden
  - bisherige audio chunks in den kontext des Modells mitnehmen
  - JSON encoding auf Zertifikate umstellen statt base64
- - fix string flush (remaining ")" sometimes)
+ - fix string flush (lost messages, format levels properly, get default format for logger) 

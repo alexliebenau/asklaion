@@ -72,7 +72,7 @@ class Transcriber:
         """
         print('Processing')
         audio_bytes = get_audio_frame(json.loads(packet), self.audio_config)
-        self.model.query(np.array(audio_bytes))
+        return self.model.query(np.array(audio_bytes))
 
 
 class RealTimeTranscriber:
@@ -147,7 +147,12 @@ class RealTimeTranscriber:
                         self._silent_chunks = 0
                         # Clear line before queue message
                         logging.info("\n\x1b[2KSent audio package off to be processed!", flush=True)  
+
+                        # FIXME: for debugging. Don't forget to remove!
+                        logging.info('Terminating loop after first sent package for debugging purposes')
+                        break
                 else:
+                    # only append to buffer if mic threshold is exceeded
                     self._silent_chunks = 0
                     self._audio_buffer.append(audio_array)
                     

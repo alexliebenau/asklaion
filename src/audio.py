@@ -174,8 +174,7 @@ class AudioConverter:
 class AudioInputRecorder:
     def __init__(
             self, 
-            config: Optional[AudioConfig] = None,
-            raw: bool = False
+            config: Optional[AudioConfig] = None
         ):
         self.p = pyaudio.PyAudio()
         self.stream = self.p.open(
@@ -187,8 +186,6 @@ class AudioInputRecorder:
             input_device_index=config.input_device
         )
         self.config = config or AudioConfig()
-        self.raw = raw
-        
     def read_chunk(self) -> dict[str, Any] | bytes:
         """
         Read and convert audio chunk
@@ -196,18 +193,16 @@ class AudioInputRecorder:
         Args:
             config: AudioConfig instance that contains audio format settings.
                     If none specified, default AudioConfig is used
-            raw: If True, returns raw bit data as numpy array
-                 If False, returns JSON-schema for Wyoming protocol (Default)
         """
         return self.stream.read(self.config.chunk, exception_on_overflow=False)
     
     def read_stream(self) -> Generator[bytes, None, None]:
         """
-        Generator that yields audio chunks (raw bytes or Wyoming protocol depending on setup)
+        Generator that yields audio chunks (raw bytes)
         """
         while True:
             try:
-                yield self.read_chunk(self.raw)
+                yield self.read_chunk()
             except Exception as e:
                 logging.error(f"Error reading audio stream: {e}")
                 break
